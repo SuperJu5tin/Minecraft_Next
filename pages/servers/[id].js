@@ -170,38 +170,19 @@ function Server() {
 
 // }
 
-export async function getStaticProps() {
-  const { id } = router.query
-  const res = await fetch('http://localhost:5000/' + id)
-  const posts = await res.json()
+export const getServerSideProps = async (context) => {
+  context.res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate')
+  // const res = await fetch(`http://localhost:5000/${context.query.id}/`, {
+  //   method : 'POST',
+  // })
+  // const logs = await res.json()
 
   return {
     props: {
-      posts,
+      // logs,
+      stuff: true
     },
-    // Next.js will attempt to re-generate the page:
-    // - When a request comes in
-    // - At most once every 10 seconds
-    revalidate: 10, // In seconds
   }
-}
-
-// This function gets called at build time on server-side.
-// It may be called again, on a serverless function, if
-// the path has not been generated.
-export async function getStaticPaths() {
-  const res = await fetch('https://.../posts')
-  const posts = await res.json()
-
-  // Get the paths we want to pre-render based on posts
-  const paths = posts.map((post) => ({
-    params: { id: post.id },
-  }))
-
-  // We'll pre-render only these paths at build time.
-  // { fallback: blocking } will server-render pages
-  // on-demand if the path doesn't exist.
-  return { paths, fallback: 'blocking' }
 }
 
 export default Server
