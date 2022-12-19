@@ -25,76 +25,66 @@ function Server() {
   const server = id
   let interval
 
-  useEffect(() => {
-    const check = async () => {
-      if (await getServerInfo(server + '/check')) {
-        updateLogs()
-      }
-      setIsServerRunning(await getServerInfo(server + '/check'))
-    }
-    check()
-  }, [])
-
   const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
   // fetch(path)
 
-  const getServerInfo = (path) => {
-    return fetch("http://localhost:5000/" + path, {
-      method : 'POST',
-    }).then((response) => {
-      return response.json()
-    })
-  }
+  // const getServerInfo = (path) => {
+  //   return fetch("http://localhost:5000/" + path, {
+  //     method : 'POST',
+  //   }).then((response) => {
+  //     return response.json()
+  //   })
+  // }
 
-  // sync client and server logs
+  // // sync client and server logs
 
-  const updateLogs = async () => {
-    setServerLog(await getServerInfo(server + '/logs'))
-    setIsServerRunning(await getServerInfo(server + '/check'))
-    if (!isServerLogsUpdating) {
-      setIsServerLogsRunning(true)
-      console.log('test2')
-      clearInterval(interval)
-      interval = setInterval(async () => {
-        setIsServerRunning(await getServerInfo(server + '/check'))
-        if (await getServerInfo(server + '/check')) {
-          setServerLog(await getServerInfo(server + '/logs'))
-        }
-        console.log('test')
-      }, 1000)
-    } else clearInterval(interval)
-  }
+  // const updateLogs = async () => {
+  //   setServerLog(await getServerInfo(server + '/logs'))
+  //   setIsServerRunning(await getServerInfo(server + '/check'))
+  //   if (!isServerLogsUpdating) {
+  //     setIsServerLogsRunning(true)
+  //     console.log('test2')
+  //     clearInterval(interval)
+  //     interval = setInterval(async () => {
+  //       setIsServerRunning(await getServerInfo(server + '/check'))
+  //       if (await getServerInfo(server + '/check')) {
+  //         setServerLog(await getServerInfo(server + '/logs'))
+  //       }
+  //       console.log('test')
+  //     }, 1000)
+  //   } else clearInterval(interval)
+  // }
 
-  // starts server
+  // // starts server
 
-  const startServer = async () => {
-    if (await getServerInfo(server + '/start')) {
-      updateLogs()
-    }
-  }
+  // const startServer = async () => {
+  //   if (await getServerInfo(server + '/start')) {
+  //     updateLogs()
+  //   }
+  // }
 
-  // sends minecraft command through input to minecraft server
+  // // sends minecraft command through input to minecraft server
 
-  const consoleCommand =  async (e) => {
-    if (e.key !== "Enter") {
-      return 
-    }
-    e.preventDefault()
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({response:e.target.value}),
-    };
-    fetch(server + '/command', options)
-    setServerLog(await getServerInfo(server + '/logs'))
-    console.log('test3')
-    e.target.value = ""
-  }
+  // const consoleCommand =  async (e) => {
+  //   if (e.key !== "Enter") {
+  //     return 
+  //   }
+  //   e.preventDefault()
+  //   const options = {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     body: JSON.stringify({response:e.target.value}),
+  //   };
+  //   fetch(server + '/command', options)
+  //   setServerLog(await getServerInfo(server + '/logs'))
+  //   console.log('test3')
+  //   e.target.value = ""
+  // }
 
   return (
     <Box>
@@ -117,8 +107,8 @@ function Server() {
           justifyContent:"center"
         }}>
           <ButtonGroup variant='text'>
-            <Button onClick={startServer}>Start Server</Button>
-            <Button onClick={updateLogs}>Update Log</Button>
+            <Button>Start Server</Button>
+            <Button>Update Log</Button>
           </ButtonGroup>
           <h3>{(typeof isServerRunning === 'undefined') ? ("Loading..."): (isServerRunning ? "The Server is up" : "The Server is down")}</h3>
         </Box>
@@ -137,7 +127,7 @@ function Server() {
               <p key={i}>{serverLog}</p>
             ))
           ): (""))}
-          <Input sx={{width:"500px"}} onKeyDown={consoleCommand}/>
+          <Input sx={{width:"500px"}}/>
         </Box>
       </Box>
     </Box>
@@ -179,5 +169,39 @@ function Server() {
 //   }
 
 // }
+
+export async function getStaticProps() {
+  const { id } = router.query
+  const res = await fetch('http://localhost:5000/' + id)
+  const posts = await res.json()
+
+  return {
+    props: {
+      posts,
+    },
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every 10 seconds
+    revalidate: 10, // In seconds
+  }
+}
+
+// This function gets called at build time on server-side.
+// It may be called again, on a serverless function, if
+// the path has not been generated.
+export async function getStaticPaths() {
+  const res = await fetch('https://.../posts')
+  const posts = await res.json()
+
+  // Get the paths we want to pre-render based on posts
+  const paths = posts.map((post) => ({
+    params: { id: post.id },
+  }))
+
+  // We'll pre-render only these paths at build time.
+  // { fallback: blocking } will server-render pages
+  // on-demand if the path doesn't exist.
+  return { paths, fallback: 'blocking' }
+}
 
 export default Server
